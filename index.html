@@ -680,15 +680,9 @@
                 <label for="eventDate">날짜</label>
                 <input id="eventDate" name="date" type="date" required>
               </div>
-              <div class="field-row">
-                <div class="field">
-                  <label for="eventTime">시작 시간</label>
-                  <input id="eventTime" name="time" type="time" value="20:00">
-                </div>
-                <div class="field">
-                  <label for="eventEndTime">종료 시간</label>
-                  <input id="eventEndTime" name="endTime" type="time">
-                </div>
+              <div class="field">
+                <label for="eventTime">시작 시간</label>
+                <input id="eventTime" name="time" type="time" value="20:00">
               </div>
               <div class="field">
                 <label for="eventTitle">방송 내용</label>
@@ -837,7 +831,6 @@
         form: document.querySelector('#scheduleForm'),
         date: document.querySelector('#eventDate'),
         time: document.querySelector('#eventTime'),
-        endTime: document.querySelector('#eventEndTime'),
         title: document.querySelector('#eventTitle'),
         category: document.querySelector('#eventCategory'),
         repeat: document.querySelector('#eventRepeat'),
@@ -894,7 +887,7 @@
       function loadEvents() {
         try {
           const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-          return Array.isArray(parsed) ? parsed.filter(isValidEvent) : [];
+          return Array.isArray(parsed) ? parsed.filter(isValidEvent).map(normalizeEvent) : [];
         } catch {
           return [];
         }
@@ -911,6 +904,11 @@
 
       function isValidEvent(event) {
         return event && typeof event.id === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(event.date || '') && typeof event.title === 'string';
+      }
+
+      function normalizeEvent(event) {
+        const { endTime, ...normalized } = event;
+        return normalized;
       }
 
       function saveEvents() {
@@ -980,7 +978,7 @@
       function formatTime(event) {
         if (event.category === 'off' && !event.time) return '하루 종일';
         if (!event.time) return '시간 미정';
-        return event.endTime ? `${event.time} – ${event.endTime}` : event.time;
+        return event.time;
       }
 
       function repeatLabel(event) {
@@ -1178,7 +1176,6 @@
         state.editingId = eventId;
         els.date.value = event.date;
         els.time.value = event.time || '';
-        els.endTime.value = event.endTime || '';
         els.title.value = event.title;
         els.category.value = event.category || 'other';
         els.repeat.value = event.repeat || 'none';
@@ -1222,17 +1219,10 @@
           els.repeatUntil.focus();
           return;
         }
-        if (els.time.value && els.endTime.value && els.endTime.value <= els.time.value) {
-          showToast('종료 시간은 시작 시간보다 늦어야 해요', true);
-          els.endTime.focus();
-          return;
-        }
-
         const data = {
           id: state.editingId || createId(),
           date,
           time: els.time.value,
-          endTime: els.endTime.value,
           title,
           category: els.category.value,
           repeat: els.repeat.value,
@@ -1297,7 +1287,7 @@
           const events = Array.isArray(parsed) ? parsed : parsed.events;
           if (!Array.isArray(events) || !events.every(isValidEvent)) throw new Error('invalid');
           if (!window.confirm(`백업에 있는 일정 ${events.length}개로 현재 일정을 교체할까요?`)) return;
-          state.events = events;
+          state.events = events.map(normalizeEvent);
           if (parsed.settings && typeof parsed.settings === 'object') state.settings = { ...state.settings, ...parsed.settings };
           saveEvents();
           saveSettings();
@@ -1351,7 +1341,6 @@
         if (els.category.value === 'off' && els.title.value.trim() === '') {
           els.title.value = '휴방';
           els.time.value = '';
-          els.endTime.value = '';
         }
       });
       els.cancelEditButton.addEventListener('click', () => resetForm());
