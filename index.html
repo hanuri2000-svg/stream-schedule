@@ -57,6 +57,22 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    body::after {
+      position: fixed;
+      z-index: 30;
+      top: 56%;
+      left: 50%;
+      width: min(72vw, 980px);
+      aspect-ratio: 501 / 466;
+      transform: translate(-50%, -50%);
+      background: url("assets/ongijonggi-logo.webp") center / contain no-repeat;
+      content: "";
+      filter: saturate(0.76) brightness(1.06);
+      mix-blend-mode: screen;
+      opacity: 0.055;
+      pointer-events: none;
+    }
+
     button, input, select, textarea { font: inherit; }
     button { color: inherit; }
     button, .schedule-card, .day-cell { -webkit-tap-highlight-color: transparent; }
@@ -532,6 +548,7 @@
     }
 
     @media (max-width: 560px) {
+      body::after { top: 54%; width: 112vw; opacity: 0.045; }
       .app-shell { width: calc(100% - 16px); padding-top: 10px; }
       .app-header { gap: 8px; }
       .brand-mark { width: 42px; height: 42px; border-radius: 13px; }
@@ -561,6 +578,7 @@
     @media print {
       :root { color-scheme: light; }
       body { background: white; color: #171825; }
+      body::after { display: none; }
       .app-shell { width: 100%; padding: 0; }
       .app-header, .month-toolbar, .form-panel, .lower-grid, .footer-note { display: none !important; }
       .workspace-grid { display: block; }
